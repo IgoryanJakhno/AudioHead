@@ -1,0 +1,6 @@
+numpy
+librosa
+soundfile
+pytest
+pretty_midi
+music21

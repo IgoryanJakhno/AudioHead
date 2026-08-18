@@ -1,0 +1,73 @@
+r.# Python
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+.Python
+*.so
+*.dylib
+*.dll
+*.egg-info/
+dist/
+build/
+.eggs/
+*.egg
+*.whl
+*.tgz
+*.tar.gz
+*.zip
+
+# Virtual environments
+venv/
+.venv/
+env/
+ENV/
+env.bak/
+venv.bak/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+.DS_Store
+*.iml
+.project
+.pydevproject
+.settings/
+*.mypy_cache/
+.dmypy.json
+dmypy.json
+
+# Testing
+.pytest_cache/
+.coverage
+htmlcov/
+.tox/
+*.cover
+.hypothesis/
+.cache/
+
+# Logs
+*.log
+
+# Temporary audio files
+*.wav
+*.mp3
+*.flac
+*.aiff
+*.aac
+*.ogg
+*.m4a
+*.opus
+
+# Output MIDI/MusicXML
+*.mid
+*.midi
+*.xml
+*.musicxml
+
+# Project specific
+outputs/
+stems/
+temp/
