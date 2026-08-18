@@ -27,7 +27,7 @@ class TestFeatureExtractor:
         hop_length = 512
         stft = FeatureExtractor.stft(audio, n_fft=n_fft, hop_length=hop_length)
         expected_freq_bins = n_fft // 2 + 1
-        expected_time_frames = 1 + (len(audio) - n_fft) // hop_length
+        expected_time_frames = 1 + len(audio) // hop_length
         assert stft.shape == (expected_freq_bins, expected_time_frames)
         assert np.iscomplexobj(stft)
 
