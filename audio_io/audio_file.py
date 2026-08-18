@@ -23,12 +23,14 @@ class AudioFile:
         duration (float): длительность в секундах.
     """
 
-    def __init__(self, path: str = None):
+    def __init__(self, path: str = None, mono: bool = True, sr: int = None):
         """
         Инициализирует объект AudioFile.
 
         Args:
             path (str, optional): путь к аудиофайлу. Если указан, файл загружается сразу.
+            mono (bool): преобразовывать ли в моно при загрузке.
+            sr (int, optional): целевая частота дискретизации.
         """
         self.path = path
         self.data = None
@@ -37,7 +39,7 @@ class AudioFile:
         self.duration = None
 
         if path is not None:
-            self.load(path)
+            self.load(path, mono=mono, sr=sr)
 
     def load(self, path: str = None, mono: bool = True, sr: int = None) -> "AudioFile":
         """
@@ -66,12 +68,24 @@ class AudioFile:
             raise FileNotFoundError(f"Файл не найден: {path}")
 
         try:
-            # librosa.load поддерживает большинство форматов (wav, mp3, flac, ...)
-            # При mono=True возвращает (n_samples,), при mono=False — (n_samples, n_channels)
             data, sr_loaded = librosa.load(path, sr=sr, mono=mono)
+
+            # Приведение к единому формату: если не mono и форма (каналы, сэмплы) - транспонируем
+            if not mono and data.ndim == 2:
+                # Если первый размер меньше второго и <= 2, считаем что это каналы
+                if data.shape[0] < data.shape[1] and data.shape[0] <= 2:
+                    data = data.T
+                    logger.debug("Транспонирование данных из (каналы, сэмплы) в (сэмплы, каналы)")
+
             self.data = data
             self.sample_rate = sr_loaded
-            self.channels = 1 if mono else (data.shape[1] if data.ndim > 1 else 1)
+
+            # Определяем количество каналов
+            if mono:
+                self.channels = 1
+            else:
+                self.channels = data.shape[1] if data.ndim > 1 else 1
+
             self.duration = librosa.get_duration(y=data, sr=sr_loaded)
             self.path = str(path_obj)
 
@@ -86,15 +100,7 @@ class AudioFile:
         return self
 
     def normalize(self, peak: float = 1.0) -> "AudioFile":
-        """
-        Нормализует сигнал по пиковому значению.
-
-        Args:
-            peak (float): желаемый пиковый уровень (по умолчанию 1.0).
-
-        Returns:
-            AudioFile: сам объект.
-        """
+        """Нормализует сигнал по пиковому значению."""
         if self.data is None:
             raise ValueError("Аудиоданные не загружены")
         max_val = np.max(np.abs(self.data))
@@ -104,15 +110,7 @@ class AudioFile:
         return self
 
     def trim_silence(self, top_db: float = 60) -> "AudioFile":
-        """
-        Обрезает тишину в начале и конце аудио.
-
-        Args:
-            top_db (float): порог в децибелах для определения тишины.
-
-        Returns:
-            AudioFile: сам объект.
-        """
+        """Обрезает тишину в начале и конце аудио."""
         if self.data is None:
             raise ValueError("Аудиоданные не загружены")
         trimmed, _ = librosa.effects.trim(self.data, top_db=top_db)
@@ -122,15 +120,7 @@ class AudioFile:
         return self
 
     def resample(self, new_sr: int) -> "AudioFile":
-        """
-        Передискретизирует сигнал на новую частоту.
-
-        Args:
-            new_sr (int): целевая частота дискретизации.
-
-        Returns:
-            AudioFile: сам объект.
-        """
+        """Передискретизирует сигнал на новую частоту."""
         if self.data is None:
             raise ValueError("Аудиоданные не загружены")
         if new_sr == self.sample_rate:
@@ -142,23 +132,13 @@ class AudioFile:
         return self
 
     def get_waveform(self) -> np.ndarray:
-        """
-        Возвращает массив аудиоданных.
-
-        Returns:
-            np.ndarray: массив сэмплов.
-        """
+        """Возвращает массив аудиоданных."""
         if self.data is None:
             raise ValueError("Аудиоданные не загружены")
         return self.data
 
     def to_mono(self) -> "AudioFile":
-        """
-        Преобразует стереосигнал в моно путём усреднения каналов (если стерео).
-
-        Returns:
-            AudioFile: сам объект.
-        """
+        """Преобразует стереосигнал в моно путём усреднения каналов (если стерео)."""
         if self.data is None:
             raise ValueError("Аудиоданные не загружены")
         if self.channels == 1:
